@@ -1,29 +1,28 @@
-from sqlalchemy import Column, String, Integer, DateTime, ForeignKey, func, CheckConstraint, DECIMAL, JSON
-from sqlalchemy.dialects.postgresql import UUID, ARRAY
-from sqlalchemy.orm import relationship
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from decimal import Decimal
 import uuid
 
-from ..core.database import Base
 
+class UserSettings(BaseModel):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str = Field(...)
+    preferred_model: str = Field(default="gpt-3.5-turbo", max_length=100)
+    max_tokens: int = Field(default=1000)
+    temperature: float = Field(default=0.7)
+    chunk_size: int = Field(default=1000)
+    chunk_overlap: int = Field(default=200)
+    default_document_filter: List[str] = Field(default_factory=list)
+    ui_preferences: Dict[str, Any] = Field(default_factory=dict)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
 
-class UserSettings(Base):
-    __tablename__ = "user_settings"
+    @validator('temperature')
+    def validate_temperature(cls, v):
+        if not (0 <= v <= 2):
+            raise ValueError('temperature must be between 0 and 2')
+        return v
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True)
-    preferred_model = Column(String(100), default="gpt-3.5-turbo")
-    max_tokens = Column(Integer, default=1000)
-    temperature = Column(DECIMAL(3, 2), default=0.7)
-    chunk_size = Column(Integer, default=1000)
-    chunk_overlap = Column(Integer, default=200)
-    default_document_filter = Column(JSON, default=lambda: [])
-    ui_preferences = Column(JSON, default=lambda: {})
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-
-    # Relationships
-    user = relationship("User", back_populates="settings")
-
-    __table_args__ = (
-        CheckConstraint("temperature >= 0 AND temperature <= 2", name="check_temperature_range"),
-    )
+    class Config:
+        from_attributes = True

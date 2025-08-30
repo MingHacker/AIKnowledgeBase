@@ -32,7 +32,8 @@ def check_requirements():
 def check_environment():
     """Check environment variables"""
     required_vars = [
-        'DATABASE_URL',
+        'SUPABASE_URL',
+        'SUPABASE_KEY',
         'OPENAI_API_KEY', 
         'SECRET_KEY'
     ]

@@ -4,11 +4,11 @@ from fastapi.staticfiles import StaticFiles
 import os
 
 from .core.config import settings
-from .core.database import engine, Base
+from .core.database import get_supabase
 from .api.api_v1.api import api_router
 
-# Create tables
-Base.metadata.create_all(bind=engine)
+# Initialize Supabase client
+supabase = get_supabase()
 
 app = FastAPI(
     title=settings.app_name,

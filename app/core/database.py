@@ -1,17 +1,11 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from supabase import create_client, Client
 from .config import settings
 
-engine = create_engine(settings.database_url)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+supabase: Client = create_client(settings.supabase_url, settings.supabase_key)
 
-Base = declarative_base()
+def get_supabase() -> Client:
+    return supabase
 
-
+# For compatibility with existing endpoints
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    return get_supabase()

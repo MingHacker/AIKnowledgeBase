@@ -41,7 +41,7 @@ class ApiService {
       (error: AxiosError) => {
         if (error.response?.status === 401) {
           this.clearToken();
-          window.location.href = '/login';
+          // window.location.href = '/login'; // Temporarily disabled to prevent infinite reload
         }
         return Promise.reject(error);
       }
@@ -54,11 +54,15 @@ class ApiService {
   setToken(token: string) {
     this.token = token;
     localStorage.setItem('token', token);
+    // Update the Authorization header for future requests
+    this.api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
   clearToken() {
     this.token = null;
     localStorage.removeItem('token');
+    // Remove the Authorization header
+    delete this.api.defaults.headers.common['Authorization'];
   }
 
   getToken(): string | null {
@@ -66,15 +70,10 @@ class ApiService {
   }
 
   // Auth endpoints
-  async login(credentials: LoginRequest): Promise<AuthResponse> {
-    const formData = new FormData();
-    formData.append('username', credentials.username);
-    formData.append('password', credentials.password);
-
-    const response = await this.api.post('/auth/login', formData, {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
+  async login(email: string, password: string): Promise<{ access_token: string; token_type: string; refresh_token?: string }> {
+    const response = await this.api.post('/auth/login', {
+      email,
+      password,
     });
     return response.data;
   }
